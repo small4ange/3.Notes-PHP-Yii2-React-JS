@@ -71,7 +71,7 @@ const site = {
     },
 
     apiGetAllNotes: async() => {
-        if(localStorage.getItem('user_id')){
+        if(localStorage.getItem('user_id') != null){
             document.getElementById("logout-button").style = "display: block;"
 
             console.group('site.apiGetAllNotes')
@@ -92,6 +92,8 @@ const site = {
             }
 
             console.groupEnd()
+        } else {
+            document.getElementById('notes-list').innerHTML='';
         }
         
     },
@@ -250,5 +252,6 @@ const site = {
     logout: () => {
         localStorage.removeItem('user_id');
         document.getElementById('logout-button').style = "display:none;";
+        site.apiGetAllNotes();
     }
 }

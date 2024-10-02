@@ -7,6 +7,21 @@
 </head>
 <body>
 
+<form id="register-user" onsubmit="site.apiRegisterUser(event)" method="post" style="display: flex; flex-direction: row;">
+        <h2>Регистрация</h2>
+        <input type="text" id="user-register-email" placeholder="Введите email">
+        <input type="text" id="user-register-password" placeholder="Введите пароль">
+        <button type="submit">Зарегистрироваться</button>
+</form>
+<form id="login-user" onsubmit="site.apiLoginUser(event)" method="post" style="display: flex; flex-direction: row;">
+        <h2>Вход</h2>
+        <input type="text" id="user-login-email" placeholder="Введите email">
+        <input type="text" id="user-login-password" placeholder="Введите пароль">
+        <button type="submit">Войти</button>
+</form>
+<div class="div-logout-button">
+    <button type="submit" id="logout-button" style="display:none;" onclick="site.logout()">Выйти</button>
+</div>
 <div id="edit-note-modal" style="display: none;">
     <div class="modal-content">
         <span class="close" onclick="site.closeModal()">&times;</span>
@@ -16,11 +31,11 @@
         <button id="save-button">Сохранить</button>
     </div>
 </div>
-    <button
+    <!-- <button
             id="api-test-btn"
             type="button"
             onclick="site.apiTest()"
-        >api test</button>
+        >api test</button> -->
     <form id="create-note" onsubmit="site.apiCreateNote(event)" method="post">
         <h1>Новая заметка</h1>
         <input type="text" id="title" placeholder="Введите заголовок">

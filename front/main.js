@@ -7,7 +7,6 @@ const site = {
         console.group('site.apiTest')
         
         let response = await fetch(site.backBaseUrl + '/api/test')
-        //console.log('response = %o', response)
         
         let responseDataObject = await response.json()
         console.log(responseDataObject)
@@ -30,20 +29,22 @@ const site = {
 
     apiCreateNote: async(event) => {
         event.preventDefault();
-        console.log("Внутри apiCreateNote");
 
         console.group('site.apiCreateNote')
         
+        const userId = localStorage.getItem('user_id');
+        console.log(userId);
+
+        if (userId == null) {
+            alert('Пользователь не авторизован');
+            return;
+        }
+
         const title = document.getElementById('title').value;
         const text = document.getElementById('text').value;
 
-        console.log(JSON.stringify({
-            title: title,
-            text: text,
-        }));
-
         try {
-            let response = await fetch(site.backBaseUrl + '/api/create', {
+            let response = await fetch(site.backBaseUrl + '/api/create?userId=' + userId, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,13 +55,13 @@ const site = {
                 })
             });
             let responseDataObject = await response.json()
-        console.log(responseDataObject)
-        
-        if (!responseDataObject.errors) {
-            site.apiGetAllNotes();
-        } else {
-            alert('Ошибка при создании заметки', responseDataObject.errors);
-        }
+            console.log(responseDataObject)
+            
+            if (!responseDataObject.errors) {
+                site.apiGetAllNotes();
+            } else {
+                alert('Ошибка при создании заметки', responseDataObject.errors);
+            }
         } catch (error) {
             console.error("Ошибка при ввполнении запроса POST", error);
         }
@@ -70,24 +71,29 @@ const site = {
     },
 
     apiGetAllNotes: async() => {
-        console.group('site.apiGetAllNotes')
-        
-        let response = await fetch(site.backBaseUrl + '/api/index')
-        //console.log('response = %o', response)
-        
-        let responseDataObject = await response.json()
-        console.log(responseDataObject)
-        
-        if (responseDataObject.allNotes) {
-            const notesContainer = document.getElementById('notes-list');
-            notesContainer.innerHTML = '';
-            responseDataObject.allNotes.forEach(note => {
-                const noteHtml = site.noteInHtml(note);
-                notesContainer.innerHTML += noteHtml;
-            });
-        }
+        if(localStorage.getItem('user_id')){
+            document.getElementById("logout-button").style = "display: block;"
 
-        console.groupEnd()
+            console.group('site.apiGetAllNotes')
+
+            console.log(localStorage.getItem('user_id'));
+            let response = await fetch(site.backBaseUrl + '/api/index?user_id=' + localStorage.getItem('user_id'))
+            
+            let responseDataObject = await response.json()
+            console.log(responseDataObject)
+            
+            if (responseDataObject.allNotes) {
+                const notesContainer = document.getElementById('notes-list');
+                notesContainer.innerHTML = '';
+                responseDataObject.allNotes.forEach(note => {
+                    const noteHtml = site.noteInHtml(note);
+                    notesContainer.innerHTML += noteHtml;
+                });
+            }
+
+            console.groupEnd()
+        }
+        
     },
 
     apiUpdateNote: async(id) => {
@@ -179,5 +185,70 @@ const site = {
             <button onclick="site.apiDeleteNote(${note.id})">Удалить</button>
         </div>
         `;
+    },
+
+    apiRegisterUser: async(event) => {
+        event.preventDefault();
+
+        console.group('site.apiRegisterUser');
+
+        const email = document.getElementById("user-register-email").value;
+        const password = document.getElementById("user-register-password").value;
+
+        console.log(email, password);
+
+        let response = await fetch(site.backBaseUrl + '/api/register', {
+            method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'email': email,
+                    'password': password,
+                })
+        })
+        let responseDataObject = await response.json()
+            console.log(responseDataObject)
+            
+        if (responseDataObject.errors){
+            alert('Ошибка при регистрации пользователя', responseDataObject.errors);
+        }
+    },
+
+    apiLoginUser: async(event) => {
+        event.preventDefault();
+
+        console.group('site.apiLoginUser');
+
+        const email = document.getElementById("user-login-email").value;
+        const password = document.getElementById("user-login-password").value;
+
+        console.log(email, password);
+
+        let response = await fetch(site.backBaseUrl + '/api/login', {
+            method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'email': email,
+                    'password': password,
+                })
+        })
+        let responseDataObject = await response.json()
+            console.log(responseDataObject)
+            
+            if ((!responseDataObject.errors) && (responseDataObject.status == 'success')) {
+                localStorage.setItem('user_id', responseDataObject.id);
+                
+                site.apiGetAllNotes();
+            } else {
+                alert('Ошибка при аутентификации пользователя', responseDataObject.errors);
+            }
+    },
+
+    logout: () => {
+        localStorage.removeItem('user_id');
+        document.getElementById('logout-button').style = "display:none;";
     }
 }

@@ -22,7 +22,22 @@ class ApiController extends Controller
         //         ],
         //     ],
         // ];
-        return $behaviors;
+        //return $behaviors;
+
+        //настройка cors для react
+        return array_merge(parent::behaviors(), [
+            'corsFilter' => [
+                'class' => \yii\filters\Cors::class,
+                'cors' => [
+                    'Origin' => ['http://localhost:5173'],
+                    'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                    'Access-Control-Allow-Credentials' => true,
+                    'Access-Control-Max-Age' => 3600,
+                    'Access-Control-Request-Headers' => ['*'],
+                    'Access-Control-Allow-Headers' => ['Content-Type', 'Authorization'],
+                ],
+            ],
+        ]);
     }
     public function beforeAction($action)
 	{
@@ -40,14 +55,14 @@ class ApiController extends Controller
 
         $post = json_decode($request->getRawBody(), true);
 
-        // $userId = $post['user_id'] ?? null;
+        $userId = \Yii::$app->request->get('userId');
+        if (!$userId) {
+            return [
+                'status' => 'error',
+                'message' => 'Не передан userId',
+            ];
+        }
 
-        // if (!isset($post['user_id'])) {
-        //     return [
-        //         'status' => 'error',
-        //         'message' => 'user_id не передан',
-        //     ];
-        // }
         $note = new Note();
         
         $note->title = $post['title'] ?? '';
@@ -65,21 +80,23 @@ class ApiController extends Controller
                     'text' => $note->note_text,
                     'id' => $userNote->id,
                 ];
+            } else {
+                return [
+                    'status' => 'error',
+                    'message' => 'Ошибка связи заметки с пользователем',
+                    'errors' => $note->errors,
+                ];
             }
             
         } else {
             return [
                 'status' => 'error',
-                'message' => 'Ошибка связи заметки с пользователем',
+                'message' => 'Ошибка создания заметки',
                 'errors' => $note->errors,
             ];
         }
 
-        return [
-            'status' => 'error',
-            'message' => 'Ошибка создания заметки',
-            'errors' => $note->errors,
-        ];
+        
 
     }
 
@@ -112,6 +129,13 @@ class ApiController extends Controller
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = \Yii::$app->request;
         $post = json_decode($request->getRawBody(), true);
+
+        if ($post === null || !isset($post['email']) || !isset($post['password'])) {
+            return [
+                'status' => 'error',
+                'message' => 'Необходимо указать email и пароль',
+            ];
+        }
 
         $user_email = $post['email'];
         $user_password = $post['password'];

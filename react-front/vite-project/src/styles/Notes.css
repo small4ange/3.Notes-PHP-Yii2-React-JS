@@ -1,0 +1,96 @@
+/* контейнер для списка заметок */
+#notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* заметка */
+.note {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    transition: transform 0.3s ease;
+    position: relative;
+}
+
+.note:hover {
+    transform: translateY(-5px);
+}
+
+/* заголовок */
+.note .title {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+/* текст */
+.note .text {
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+
+/* дата */
+.note .date {
+    font-size: 0.9em;
+    color: grey;
+    position: absolute;
+    bottom: 10px;
+    right: 15px;
+}
+
+/* кнопка удаления */
+.note button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #ff5c5c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.note button:hover {
+    background-color: #ff2c2c;
+}
+
+/* стили для Markdown */
+.markdown-viewer h1, .markdown-viewer h2, .markdown-viewer h3 {
+    color: #333;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.markdown-viewer p {
+    line-height: 1.6;
+    color: #555;
+}
+
+/* стили для тегов */
+.tags-section {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.tag-item {
+    background-color: #f1f1f1;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    font-weight: bold;
+    display: inline-block;
+}
+.tag-text {
+    margin: 0;
+}
+.createnote-div {
+    width: 100%;
+    max-width: 800px;
+    
+}

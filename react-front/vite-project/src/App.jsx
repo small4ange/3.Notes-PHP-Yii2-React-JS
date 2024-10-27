@@ -1,33 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 
-//модальное окно для просмотра и редактирования заметок
-function Modal({ note, onClose, onSave }) {
-    const [editedTitle, setEditedTitle] = useState(note.title);
-    const [editedText, setEditedText] = useState(note.note_text);
+import './styles/Notes.css';
+import './components/CreateNote';
+import CreateNote from './components/CreateNote';
+import Modal from './components/Modal';
 
-    const handleSave = () => {
-        onSave({ ...note, title: editedTitle, note_text: editedText });
-    };
-
-    return (
-        <div className="modal">
-            <div className="modal-content">
-                <h2>Редактировать заметку</h2>
-                <input
-                    type="text"
-                    value={editedTitle}
-                    onChange={(e) => setEditedTitle(e.target.value)}
-                />
-                <textarea
-                    value={editedText}
-                    onChange={(e) => setEditedText(e.target.value)}
-                />
-                <button onClick={handleSave}>Сохранить</button>
-                <button onClick={onClose}>Закрыть</button>
-            </div>
-        </div>
-    );
-}
 
 //вся логика работы с заметками
 function Notes() {
@@ -35,6 +13,7 @@ function Notes() {
     const [title, setTitle] = useState('');
     const [text, setText] = useState('');
     const [selectedNote, setSelectedNote] = useState(null); //выбранная заметка для редактирования или просмотра
+    const [files, setFiles] = useState([]);
 
     useEffect(() => {
         fetchNotes();
@@ -51,50 +30,37 @@ function Notes() {
         }
     };
 
-    //создание заметки
-    const createNote = async (event) => {
-        event.preventDefault();
-        const userId = localStorage.getItem('user_id');
-        if (!userId) {
-          alert('Пользователь не авторизован');
-          return;
-      } else {
-        console.log("userId" + userId);
-      }
-      console.log("userId" + userId);
-        try {
-            let response = await fetch('http://localhost/3_тестовое/back/web' + '/api/create?userId=' + userId, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  'title': title,
-                  'text': text,
-              }),
-            });
-            let data = await response.json();
-            console.log(data);
-            
-            if(!data.errors) {
-              fetchNotes();
-              setTitle('');
-              setText('');
-            }
-            
-
-        } catch (error) {
-            console.error('Ошибка создания заметки:', error);
-        }
-    };
 
     //редактирование заметки
     const updateNote = async (updatedNote) => {
         try {
-            console.log(updatedNote.id, updatedNote.note_text, updatedNote.title)
+            const formData = new FormData();
+            formData.append('title', updatedNote.title);
+            formData.append('text', updatedNote.note_text);
+
+            updatedNote.newFiles.forEach((file) => {
+                formData.append('newFiles[]', file);
+            });
+
+            // удаление убранных файлов
+            const removedFileIds = updatedNote.removedFiles;
+            console.log(`removedFileIds:${removedFileIds}`);
+            formData.append('removedFiles', JSON.stringify(removedFileIds));
+
+            // updatedNote.newTags.forEach((tag) => {
+            //     formData.append('newTags[]', tag);
+            // });
+            formData.append('newTags', JSON.stringify(updatedNote.newTags));
+            
+            const removedTagIds = updatedNote.removedTags;
+            console.log(`removedTagIds:${removedTagIds}`);
+            formData.append('removedTags', JSON.stringify(removedTagIds));
+
             let response = await fetch('http://localhost/3_тестовое/back/web' + '/api/update?id=' + updatedNote.id , {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: updatedNote.title, text: updatedNote.note_text }),
+                body: formData,
             });
+            
             let data = await response.json();
             if (!data.errors) {
                 fetchNotes();
@@ -140,21 +106,10 @@ function Notes() {
                 <button onClick={logout}>Выйти</button>
             </div>
 
-            <form onSubmit={createNote}>
-                <h2>Новая заметка</h2>
-                <input
-                    type="text"
-                    placeholder="Введите заголовок"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                />
-                <textarea
-                    placeholder="Введите текст"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                />
-                <button type="submit">Создать</button>
-            </form>
+            <div className="createnote-div">
+                <CreateNote></CreateNote>
+            </div>
+            
 
             <h2>Список заметок</h2>
             <div id="notes-list">
@@ -167,14 +122,44 @@ function Notes() {
                             onClick={() => setSelectedNote(note)}
                         >
                             <div className="title">
-                                <p><b>{note.title}</b></p>
+                                <ReactMarkdown>{note.title}</ReactMarkdown>
                             </div>
                             <div className="text">
-                                <p>{note.note_text}</p>
+                                <ReactMarkdown>{note.note_text}</ReactMarkdown>
+                            </div>
+                            {note.files && note.files.length > 0 && (
+                                <div className="files">
+                                    <h3>Прикрепленные файлы:</h3>
+                                    {note.files.map((file, index) => {
+                                         const fileName = file.url.split('/').pop();
+                                         const downloadUrl = `http://localhost/3_тестовое/back/web/api/download-file?fileName=${fileName}`;
+                                         return (
+                                            <div key={index} className="file">
+                                                <a href={downloadUrl} download>
+                                                    {file.name}
+                                                </a>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            <div className="tags-section">
+                                {note.tags.length>0 ? (
+                                    note.tags.map((tag,index) => (
+                                        <div key={index} className="tag-item">
+                                            <p className="tag-text">
+                                                #{tag.tag_name}
+                                            </p>
+                                        </div>
+                                    ))
+                                ): (
+                                    <p></p>
+                                )}
                             </div>
                             <div className="date">
                                 <p>{note.date}</p>
                             </div>
+
                             
                         </div>
                         <button onClick={() => deleteNote(note.id)}>Удалить</button>
